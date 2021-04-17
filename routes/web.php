@@ -1,6 +1,11 @@
 <?php
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use Laravel\Socialite\Facades\Socialite;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,3 +27,22 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
+
+Route::get('/login/github', function () {
+    return Socialite::driver('github')->redirect();
+});
+
+Route::get('/login/github/callback', function () {
+    $user = Socialite::driver('github')->user();
+
+    $user = User::firstOrCreate([
+        'email' => $user->email
+    ], [
+        'name' => $user->name,
+        'password' => Hash::make(Str::random()),
+    ]);
+
+    Auth::login($user, true);
+
+    return redirect('/dashboard');
+});
